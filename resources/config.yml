@@ -1,0 +1,25 @@
+#ObbyBlaster Config
+#ObbyBlaster by BajanVlogs
+
+#CANNON BUILD FORMAT (For reference)
+#T = TNT - O = Obsidian - B = Button
+
+#T
+#OB
+
+
+#Enable cannon messages
+cannon-messages: true
+
+cannon-unloaded-message: "Cannon isn't loaded!"
+cannon-launch-message: "Cannon launched to the {DIRECTION}"
+cannon-launch-popup: "A cannon was launched close to your location!"
+
+#Choose how close a player has to be to sense a cannon shot (In blocks)
+cannon-sense-distance: 20
+
+#Choose what the speed of the tnt is multiplied by (RECOMMENDED: 1.5-2)
+launch-speed: 1.5
+
+#Make the cannon trigger fall off when using cannon? (Like a pull string)
+trigger-detach: true
