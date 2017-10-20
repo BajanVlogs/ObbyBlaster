@@ -1,0 +1,7 @@
+name: ObbyBlaster
+author: BajanVlogs
+website: http://twitter.com/KevinVlogs
+description: Launch TNT with automatic cannons!
+version: 0.0.1
+api: 3.0.0-ALPHA9
+main: ObbyBlaster\MainClass
