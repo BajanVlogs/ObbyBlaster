@@ -22,4 +22,4 @@ cannon-sense-distance: 20
 launch-speed: 1.5
 
 #Make the cannon trigger fall off when using cannon? (Like a pull string)
-trigger-detach: true
+trigger-detach: false
