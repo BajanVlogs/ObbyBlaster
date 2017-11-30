@@ -135,9 +135,9 @@ class MainClass extends PluginBase implements Listener{
 				new DoubleTag ("", $load->getZ() + 0.5) 
 			]),
 			"Motion" => new ListTag ("Motion", [ 
-				new DoubleTag("", - \sin($yaw / 180 * M_PI) * \cos($pitch / 180 * M_PI)),
-				new DoubleTag("", - \sin ($pitch / 180 * M_PI )),
-				new DoubleTag("", \cos($yaw / 180 * M_PI) * \cos($pitch / 180 * M_PI )) 
+				new DoubleTag("", - \sin($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI)),
+				new DoubleTag("", - \sin ($pitch / 280 * M_PI )),
+				new DoubleTag("", \cos($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI )) 
 			]),
 			"Rotation" => new ListTag("Rotation", [ 
 				new FloatTag("", $yaw),
