@@ -20,8 +20,8 @@ use pocketmine\block\Block;
 use pocketmine\item\Item;
 use pocketmine\entity\Entity;
 
-use pocketmine\level\sound\ExplodeSound;
-use pocketmine\level\sound\ButtonClickSound;
+use pocketmine\level\sound\GhastShootSound;
+use pocketmine\level\sound\ClickSound;
 use pocketmine\level\particle\MobSpawnParticle;
 
 class MainClass extends PluginBase implements Listener{
@@ -158,7 +158,7 @@ class MainClass extends PluginBase implements Listener{
 		if($b->getId() == 77 || $b->getId() == 143){
 			if($this->isCannon($b)){
 				$e->setCancelled();
-				$p->getLevel()->addSound(new ButtonClickSound($p));
+				$p->getLevel()->addSound(new ClickSound($p));
 				if($this->isCannonLoaded($b)){
 					$this->launchCannon($b,$p);
 					$b->getLevel()->addParticle(new MobSpawnParticle($this->getCannonLoadLoc($b)->add(0.5,0,0.5)));
@@ -172,7 +172,7 @@ class MainClass extends PluginBase implements Listener{
 					foreach($this->getServer()->getOnlinePlayers() as $pl){
 						if($pl->getLevel() == $b->getLevel()){
 							if($pl->getPosition()->distance($b) <= $this->getConfig()->get("cannon-sense-distance")){
-								$pl->getLevel()->addSound(new ExplodeSound($pl->subtract(0,2)));
+								$pl->getLevel()->addSound(new GhastShootSound($pl->subtract(0,2)));
 								if($this->getConfig()->get("cannon-messages") == true){
 									if($pl != $p){
 										$pl->sendPopup($this->getConfig()->get("cannon-launch-popup"));
