@@ -42,6 +42,10 @@ class MainClass extends PluginBase implements Listener{
 		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 246) return true;
 		if($button->getSide(Vector3::SIDE_EAST)->getId() == 246) return true;
 		if($button->getSide(Vector3::SIDE_WEST)->getId() == 246) return true;
+		if($button->getSide(Vector3::SIDE_NORTH)->getId() == 5) return true;
+		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 5) return true;
+		if($button->getSide(Vector3::SIDE_EAST)->getId() == 5) return true;
+		if($button->getSide(Vector3::SIDE_WEST)->getId() == 5) return true;
 		return false;
 	}
 
@@ -80,6 +84,10 @@ class MainClass extends PluginBase implements Listener{
 		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 246) $orientation = "south";
 		if($button->getSide(Vector3::SIDE_EAST)->getId() == 246) $orientation = "east";
 		if($button->getSide(Vector3::SIDE_WEST)->getId() == 246) $orientation = "west";
+		if($button->getSide(Vector3::SIDE_NORTH)->getId() == 5) return true;
+		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 5) return true;
+		if($button->getSide(Vector3::SIDE_EAST)->getId() == 5) return true;
+		if($button->getSide(Vector3::SIDE_WEST)->getId() == 5) return true;
 		$dir = 0;
 		switch($orientation){
 			case "north":
