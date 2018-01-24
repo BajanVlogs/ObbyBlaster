@@ -35,17 +35,19 @@ class MainClass extends PluginBase implements Listener{
 
 	public function isCannon(Block $button){
 		if($button->getSide(Vector3::SIDE_NORTH)->getId() == 49) return true;
+		if($button->getSide(Vector3::SIDE_NORTH_WEST)->getId() == 49) return true;
 		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 49) return true;
+		if($button->getSide(Vector3::SIDE_SOUTH_EAST)->getId() == 49
 		if($button->getSide(Vector3::SIDE_EAST)->getId() == 49) return true;
+		if($button->getSide(Vector3::SIDE_EAST_WEST)->getId() == 249) return true;
 		if($button->getSide(Vector3::SIDE_WEST)->getId() == 49) return true;
 		if($button->getSide(Vector3::SIDE_NORTH)->getId() == 246) return true;
+		if($button->getSide(Vector3::SIDE_NORTH_WEST)->getId() == 49) return true;
 		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 246) return true;
+		if($button->getSide(Vector3::SIDE_SOUTH_EAST)->getId() == 246) return true;
 		if($button->getSide(Vector3::SIDE_EAST)->getId() == 246) return true;
+		if($button->getSide(Vector3::SIDE_EAST_WEST)->getId() == 246) return true;
 		if($button->getSide(Vector3::SIDE_WEST)->getId() == 246) return true;
-		if($button->getSide(Vector3::SIDE_NORTH)->getId() == 5) return true;
-		if($button->getSide(Vector3::SIDE_SOUTH)->getId() == 5) return true;
-		if($button->getSide(Vector3::SIDE_EAST)->getId() == 5) return true;
-		if($button->getSide(Vector3::SIDE_WEST)->getId() == 5) return true;
 		return false;
 	}
 
