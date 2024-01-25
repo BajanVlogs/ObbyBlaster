@@ -3,5 +3,5 @@ author: BajanVlogs
 website: http://twitter.com/KevinVlogs
 description: Launch TNT with automatic cannons!
 version: 0.0.3
-api: 4.0.0
+api: 5.0.0
 main: ObbyBlaster\MainClass
