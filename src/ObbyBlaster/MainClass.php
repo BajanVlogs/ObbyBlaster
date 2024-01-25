@@ -17,6 +17,7 @@ use pocketmine\entity\Entity;
 use pocketmine\level\sound\GhastShootSound;
 use pocketmine\level\sound\ClickSound;
 use pocketmine\level\particle\MobSpawnParticle;
+use pocketmine\tile\Tile;
 
 class MainClass extends PluginBase implements Listener{
 
@@ -98,4 +99,78 @@ class MainClass extends PluginBase implements Listener{
         }
     }
 
+    private function isDispenser(Block $block): bool {
+        $dispenserIds = [23, 158, 154, 149];
+        return in_array($block->getId(), $dispenserIds) && $block->getLevel()->getTile($block) instanceof Tile;
+    }
+
+    private function launchFromDispenser(Block $dispenser, Player $launcher){
+        $tile = $dispenser->getLevel()->getTile($dispenser);
+
+        if ($tile instanceof Tile) {
+            $inventory = $tile->getInventory();
+
+            if ($inventory->canAddItem(Item::get(Item::TNT))) {
+                $inventory->addItem(Item::get(Item::TNT));
+            } else {
+                // Handle the case where the dispenser inventory is full
+                // You may want to customize this part based on your plugin's requirements
+            }
+        }
+    }
+
+    private function getAdjacentDispenser(Block $button): ?Block {
+        $sides = [
+            Vector3::SIDE_NORTH,
+            Vector3::SIDE_SOUTH,
+            Vector3::SIDE_EAST,
+            Vector3::SIDE_WEST
+        ];
+
+        foreach ($sides as $side) {
+            $sideBlock = $button->getSide($side);
+            if ($this->isDispenser($sideBlock)) {
+                return $sideBlock;
+            }
+        }
+
+        return null;
+    }
+
+    private function launchCannon(Block $button, Player $launcher){
+        $dispenser = $this->getAdjacentDispenser($button);
+
+        if ($dispenser !== null) {
+            $this->launchFromDispenser($dispenser, $launcher);
+        } else {
+            $load = $this->getCannonLoadLoc($button);
+            $load->getLevel()->setBlock($load, Block::get(0, 0));
+
+            $yaw = $this->getCannonYaw($button);
+            $pitch = 1;
+
+            $nbt = new CompoundTag("", [
+                "Pos" => new ListTag("Pos", [
+                    new DoubleTag("", $load->getX() + 0.5),
+                    new DoubleTag("", $load->getY()),
+                    new DoubleTag("", $load->getZ() + 0.5)
+                ]),
+                "Motion" => new ListTag("Motion", [
+                    new DoubleTag("", - \sin($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI)),
+                    new DoubleTag("", - \sin($pitch / 280 * M_PI)),
+                    new DoubleTag("", \cos($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI))
+                ]),
+                "Rotation" => new ListTag("Rotation", [
+                    new FloatTag("", $yaw),
+                    new FloatTag("", $pitch)
+                ])
+            ]);
+
+            $cannonLoad = Entity::createEntity("PrimedTNT", $launcher->getLevel(), $nbt, true);
+            $cannonLoad->setMotion($cannonLoad->getMotion()->multiply($this->getConfig()->get("launch-speed")));
+            $cannonLoad->spawnToAll();
+        }
+    }
+
+    // ... (other methods)
 }
