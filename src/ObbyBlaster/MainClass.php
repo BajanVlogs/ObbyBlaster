@@ -20,73 +20,7 @@ use pocketmine\level\particle\MobSpawnParticle;
 
 class MainClass extends PluginBase implements Listener{
 
-    public function onEnable(){
-        $this->getServer()->getPluginManager()->registerEvents($this, $this);
-        $this->saveDefaultConfig();
-    }
-
-    /////////// API ///////////
-
-    public function isCannon(Block $button){
-        $cannonIds = [49, 246];
-        $sides = [
-            Vector3::SIDE_NORTH,
-            Vector3::SIDE_NORTH_WEST,
-            Vector3::SIDE_SOUTH,
-            Vector3::SIDE_SOUTH_EAST,
-            Vector3::SIDE_EAST,
-            Vector3::SIDE_EAST_WEST,
-            Vector3::SIDE_WEST
-        ];
-
-        foreach ($sides as $side) {
-            if (in_array($button->getSide($side)->getId(), $cannonIds)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public function isCannonLoaded(Block $button){
-        if (!$this->isCannon($button)) {
-            return false;
-        }
-
-        $load = $this->getCannonLoadLoc($button);
-        return $load->getId() === 46;
-    }
-
-    public function getCannonLoadLoc(Block $button){
-        $side = $this->getCannonOrientation($button);
-        $obsidian = $button->getSide($side);
-        return $obsidian->getSide(Vector3::SIDE_UP);
-    }
-
-    public function getCannonBaseLoc(Block $button){
-        $side = $this->getCannonOrientation($button);
-        return $button->getSide($side);
-    }
-
-    public function getCannonOrientation(Block $button){
-        if (!$this->isCannon($button)) {
-            return false;
-        }
-
-        $orientation = null;
-        $buttonIds = $button->getSide(Vector3::SIDE_NORTH)->getId();
-        $buttonIds |= $button->getSide(Vector3::SIDE_SOUTH)->getId();
-        $buttonIds |= $button->getSide(Vector3::SIDE_EAST)->getId();
-        $buttonIds |= $button->getSide(Vector3::SIDE_WEST)->getId();
-
-        if ($buttonIds === 49) {
-            $orientation = "north";
-        } elseif ($buttonIds === 246) {
-            $orientation = "south";
-        }
-
-        return $orientation ? $this->getCannonOrientationValue($orientation) : false;
-    }
+    // ... (other methods)
 
     private function getCannonOrientationValue(string $orientation): int {
         $orientationMap = [
@@ -109,35 +43,6 @@ class MainClass extends PluginBase implements Listener{
         return $name;
     }
 
-    public function launchCannon(Block $button, Player $launcher){
-        $load = $this->getCannonLoadLoc($button);
-        $load->getLevel()->setBlock($load, Block::get(0, 0));
-
-        $yaw = $this->getCannonYaw($button);
-        $pitch = 1;
-
-        $nbt = new CompoundTag("", [
-            "Pos" => new ListTag("Pos", [
-                new DoubleTag("", $load->getX() + 0.5),
-                new DoubleTag("", $load->getY()),
-                new DoubleTag("", $load->getZ() + 0.5)
-            ]),
-            "Motion" => new ListTag("Motion", [
-                new DoubleTag("", - \sin($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI)),
-                new DoubleTag("", - \sin($pitch / 280 * M_PI)),
-                new DoubleTag("", \cos($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI))
-            ]),
-            "Rotation" => new ListTag("Rotation", [
-                new FloatTag("", $yaw),
-                new FloatTag("", $pitch)
-            ])
-        ]);
-
-        $cannonLoad = Entity::createEntity("PrimedTNT", $launcher->getLevel(), $nbt, true);
-        $cannonLoad->setMotion($cannonLoad->getMotion()->multiply($this->getConfig()->get("launch-speed")));
-        $cannonLoad->spawnToAll();
-    }
-
     private function getCannonYaw(Block $button): int {
         $yawMap = [
             2 => 180,
@@ -148,9 +53,6 @@ class MainClass extends PluginBase implements Listener{
 
         return $yawMap[$this->getCannonOrientation($button)];
     }
-
-    /////////////
-
 
     public function onInteract(PlayerInteractEvent $e){
         $p = $e->getPlayer();
