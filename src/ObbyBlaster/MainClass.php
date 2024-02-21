@@ -3,174 +3,103 @@
 namespace ObbyBlaster;
 
 use pocketmine\plugin\PluginBase;
-use pocketmine\Player;
-use pocketmine\nbt\tag\CompoundTag;
-use pocketmine\nbt\tag\ListTag;
-use pocketmine\nbt\tag\DoubleTag;
-use pocketmine\nbt\tag\FloatTag;
 use pocketmine\event\Listener;
+
+use pocketmine\event\block\BlockBreakEvent;
 use pocketmine\event\player\PlayerInteractEvent;
-use pocketmine\math\Vector3;
+
 use pocketmine\block\Block;
-use pocketmine\item\Item;
+use pocketmine\block\BlockLegacyIds;
+
 use pocketmine\entity\Entity;
-use pocketmine\level\sound\GhastShootSound;
-use pocketmine\level\sound\ClickSound;
-use pocketmine\level\particle\MobSpawnParticle;
-use pocketmine\tile\Tile;
+use pocketmine\entity\object\PrimedTNT;
 
-class MainClass extends PluginBase implements Listener{
+use pocketmine\math\Vector3;
 
-    // ... (other methods)
+use pocketmine\utils\Config;
 
-    private function getCannonOrientationValue(string $orientation): int {
-        $orientationMap = [
-            "north" => 2,
-            "south" => 3,
-            "east" => 5,
-            "west" => 4
-        ];
+use pocketmine\player\Player;
 
-        return $orientationMap[$orientation];
+class MainClass extends PluginBase implements Listener {
+
+  public function onEnable(): void {
+
+    $this->saveDefaultConfig();
+    $this->getServer()->getPluginManager()->registerEvents($this, $this);
+
+  }
+
+  public function onBreak(BlockBreakEvent $event) {
+
+    // Cannon launch logic
+
+  }
+
+public function onInteract(PlayerInteractEvent $event){
+
+  $block = $event->getBlock();
+
+  if(!$this->isCannon($block)){
+    return;
+  }
+
+  $launchDistance = $this->getConfig()->get("cannon-launch-distance", 10);
+
+  $this->launchTNT($block, $launchDistance);
+
+}
+
+private function launchTNT(Block $button, int $distance){
+
+  $direction = $this->getCannonDirection($button);
+
+  for($i = 0; $i < $distance; $i++){
+    $tnt = new PrimedTNT($button->asVector3()->add($direction->multiply($i)));
+    $tnt->spawnToAll();
+  }
+
+}
+
+    
+  }
+
+  public function isCannon(Block $button): bool {
+
+    if($button->getSide(Vector3::SIDE_NORTH)->getId() == BlockLegacyIds::OBSIDIAN) {
+      return true;
+    }
+    
+    if($button->getSide(Vector3::SIDE_SOUTH)->getId() == BlockLegacyIds::OBSIDIAN) {
+       return true;
     }
 
-    public function getCannonOrientationName(Block $button){
-        $orientation = $this->getCannonOrientation($button);
-        $name = null;
-        if ($orientation !== false) {
-            $name = array_flip($this->getCannonOrientationValue($orientation));
-        }
-
-        return $name;
+    if($button->getSide(Vector3::SIDE_EAST)->getId() == BlockLegacyIds::OBSIDIAN) {
+       return true;
     }
 
-    private function getCannonYaw(Block $button): int {
-        $yawMap = [
-            2 => 180,
-            5 => 270,
-            3 => 0,
-            4 => 90
-        ];
-
-        return $yawMap[$this->getCannonOrientation($button)];
+    if($button->getSide(Vector3::SIDE_WEST)->getId() == BlockLegacyIds::OBSIDIAN) {
+       return true;
     }
 
-    public function onInteract(PlayerInteractEvent $e){
-        $p = $e->getPlayer();
-        $b = $e->getBlock();
+    return false;
 
-        if ($b->getId() === 77 || $b->getId() === 143) {
-            if ($this->isCannon($b)) {
-                $e->setCancelled();
-                $p->getLevel()->addSound(new ClickSound($p));
+  }
 
-                if ($this->isCannonLoaded($b)) {
-                    $this->launchCannon($b, $p);
-                    $b->getLevel()->addParticle(new MobSpawnParticle($this->getCannonLoadLoc($b)->add(0.5, 0, 0.5)));
+  private function sendCannonMessage(Player $player, string $direction){
 
-                    if ($this->getConfig()->get("trigger-detach") == true) {
-                        $b->getLevel()->dropItem($b->add(0.5, 0, 0.5), Item::get($b->getId(), $b->getDamage(), 1));
-                        $b->getLevel()->setBlock($b, Block::get(0, 0));
-                    }
+    $config = $this->getConfig();
 
-                    if ($this->getConfig()->get("cannon-messages") == true) {
-                        $p->sendMessage(str_replace("{DIRECTION}", $this->getCannonOrientationName($b), $this->getConfig()->get("cannon-launch-message")));
-                    }
-
-                    foreach ($this->getServer()->getOnlinePlayers() as $pl) {
-                        if ($pl->getLevel() == $b->getLevel()) {
-                            if ($pl->getPosition()->distance($b) <= $this->getConfig()->get("cannon-sense-distance")) {
-                                $pl->getLevel()->addSound(new GhastShootSound($pl->subtract(0, 2)));
-
-                                if ($this->getConfig()->get("cannon-messages") == true) {
-                                    if ($pl !== $p) {
-                                        $pl->sendPopup($this->getConfig()->get("cannon-launch-popup"));
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    if ($this->getConfig()->get("cannon-messages") == true) {
-                        $p->sendMessage($this->getConfig()->get("cannon-unloaded-message"));
-                    }
-                }
-            }
-        }
+    if($config->get("cannon-messages")){
+      $message = $config->get("cannon-launch-message");
+      $message = str_replace("{DIRECTION}", $direction, $message);
+      $player->sendMessage($message);
     }
 
-    private function isDispenser(Block $block): bool {
-        $dispenserIds = [23, 158, 154, 149];
-        return in_array($block->getId(), $dispenserIds) && $block->getLevel()->getTile($block) instanceof Tile;
+    if($config->get("cannon-launch-popup")){
+      $popupMessage = $config->get("cannon-launch-popup"); 
+      $player->sendPopup($popupMessage);
     }
 
-    private function launchFromDispenser(Block $dispenser, Player $launcher){
-        $tile = $dispenser->getLevel()->getTile($dispenser);
+  }
 
-        if ($tile instanceof Tile) {
-            $inventory = $tile->getInventory();
-
-            if ($inventory->canAddItem(Item::get(Item::TNT))) {
-                $inventory->addItem(Item::get(Item::TNT));
-            } else {
-                // Handle the case where the dispenser inventory is full
-                // You may want to customize this part based on your plugin's requirements
-            }
-        }
-    }
-
-    private function getAdjacentDispenser(Block $button): ?Block {
-        $sides = [
-            Vector3::SIDE_NORTH,
-            Vector3::SIDE_SOUTH,
-            Vector3::SIDE_EAST,
-            Vector3::SIDE_WEST
-        ];
-
-        foreach ($sides as $side) {
-            $sideBlock = $button->getSide($side);
-            if ($this->isDispenser($sideBlock)) {
-                return $sideBlock;
-            }
-        }
-
-        return null;
-    }
-
-    private function launchCannon(Block $button, Player $launcher){
-        $dispenser = $this->getAdjacentDispenser($button);
-
-        if ($dispenser !== null) {
-            $this->launchFromDispenser($dispenser, $launcher);
-        } else {
-            $load = $this->getCannonLoadLoc($button);
-            $load->getLevel()->setBlock($load, Block::get(0, 0));
-
-            $yaw = $this->getCannonYaw($button);
-            $pitch = 1;
-
-            $nbt = new CompoundTag("", [
-                "Pos" => new ListTag("Pos", [
-                    new DoubleTag("", $load->getX() + 0.5),
-                    new DoubleTag("", $load->getY()),
-                    new DoubleTag("", $load->getZ() + 0.5)
-                ]),
-                "Motion" => new ListTag("Motion", [
-                    new DoubleTag("", - \sin($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI)),
-                    new DoubleTag("", - \sin($pitch / 280 * M_PI)),
-                    new DoubleTag("", \cos($yaw / 280 * M_PI) * \cos($pitch / 180 * M_PI))
-                ]),
-                "Rotation" => new ListTag("Rotation", [
-                    new FloatTag("", $yaw),
-                    new FloatTag("", $pitch)
-                ])
-            ]);
-
-            $cannonLoad = Entity::createEntity("PrimedTNT", $launcher->getLevel(), $nbt, true);
-            $cannonLoad->setMotion($cannonLoad->getMotion()->multiply($this->getConfig()->get("launch-speed")));
-            $cannonLoad->spawnToAll();
-        }
-    }
-
-    // ... (other methods)
 }
