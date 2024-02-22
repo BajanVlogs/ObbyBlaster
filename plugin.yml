@@ -4,4 +4,4 @@ website: http://rebirthbe.com
 description: Launch TNT with automatic cannons!
 version: 0.0.4
 api: 5.0.0
-main: ObbyBlaster\MainClass
+main: ObbyBlaster\Main
