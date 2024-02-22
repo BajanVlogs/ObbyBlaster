@@ -9,6 +9,8 @@ use pocketmine\plugin\PluginBase;
 use pocketmine\block\Water;
 use pocketmine\block\VanillaBlocks;
 
+use ObbyBlaster\ObsidianData;
+
 use pocketmine\entity\object\PrimedTNT;
 
 use pocketmine\event\Listener;
