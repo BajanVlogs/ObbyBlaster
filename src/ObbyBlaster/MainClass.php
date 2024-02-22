@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ObbyBlaster;
 
 use pocketmine\block\Block;
+use pocketmine\block\Water;
 use pocketmine\block\VanillaBlocks;
 use pocketmine\entity\object\PrimedTNT;
 use pocketmine\event\Listener;
