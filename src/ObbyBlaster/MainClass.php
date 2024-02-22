@@ -1,88 +1,100 @@
 <?php
 
+declare(strict_types=1);
+
 namespace ObbyBlaster;
 
 use pocketmine\plugin\PluginBase;
-use pocketmine\event\Listener;
 
-use pocketmine\event\block\BlockBreakEvent;
-use pocketmine\event\player\PlayerInteractEvent;
+use pocketmine\block\Water;
+use pocketmine\block\VanillaBlocks;
 
-use pocketmine\block\Block;
-use pocketmine\block\BlockLegacyIds;
-
-use pocketmine\entity\Entity;
 use pocketmine\entity\object\PrimedTNT;
 
-use pocketmine\math\Vector3;
+use pocketmine\event\Listener;
+use pocketmine\event\entity\EntityExplodeEvent;
+use pocketmine\event\block\BlockBreakEvent;
 
-use pocketmine\utils\Config;
+class Main extends PluginBase implements Listener
+{
+    /** @var ObsidianData[] */
+    private array $obsidian = [];
 
-use pocketmine\player\Player;
-
-class MainClass extends PluginBase implements Listener {
-
-    public function onEnable(): void {
+    public function onEnable() : void
+    {
         $this->saveDefaultConfig();
+
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
     }
 
-    public function onBreak(BlockBreakEvent $event) {
-        // Cannon launch logic
+    public function onEntityExplode(EntityExplodeEvent $event) : void
+    {
+        $entity = $event->getEntity();
+
+        if ($entity instanceof PrimedTNT) {
+            $center = $entity->getWorld()->getBlockAt(
+                $entity->getPosition()->getFloorX(),
+                $entity->getPosition()->getFloorY(),
+                $entity->getPosition()->getFloorZ()
+            );
+
+            // Cancel TNT Explosion in water
+            if ($center instanceof Water) {
+                return;
+            }
+
+            $affected = array_map(fn($i) => $center->getSide($i), range(0, 6));
+
+            foreach ($affected as $block) {
+                // If block isn't obsidian
+                if(!$block instanceof (VanillaBlocks::OBSIDIAN())) {
+                    continue;
+                }
+
+                // If ObsidianData already exists, then add count if it does.
+                $obsidianData = $this->getObsidianData($block);
+                if ($obsidianData) {
+                    $obsidianData->addCount();
+                } else {
+                    $this->obsidian[] = new ObsidianData($block);
+                }
+
+                $this->obsidian = array_filter($this->obsidian, [$this, 'filterObsidianData']);
+            }
+        }
     }
 
-    public function onInteract(PlayerInteractEvent $event){
-        $block = $event->getBlock();
-        
-        if(!$this->isCannon($block)){
-            return;
-        }
-
-        $launchDistance = $this->getConfig()->get("cannon-launch-distance", 10);
-        $this->launchTNT($block, $launchDistance);
+    /**
+     * Remove ObsidianData if the obsidian is broken by hand
+     */
+    public function onBlockBreak(BlockBreakEvent $event) : void
+    {
+        $this->obsidian = array_filter(
+            $this->obsidian, fn($object) => !$object->getPosition()->equals($event->getBlock()->getPosition())
+        );
     }
 
-    private function launchTNT(Block $button, int $distance){
-        $direction = $this->getCannonDirection($button);
-
-        for($i = 0; $i < $distance; $i++){
-            $tnt = new PrimedTNT($button->asVector3()->add($direction->multiply($i)));
-            $tnt->spawnToAll();
+    private function getObsidianData(Block $block) : ?ObsidianData
+    {
+        foreach ($this->obsidian as $obsidianData) {
+            if ($obsidianData->getPosition()->equals($block->getPosition())) {
+                return $obsidianData;
+            }
         }
+        return null;
     }
 
-    public function isCannon(Block $button): bool {
-        if($button->getSide(Vector3::SIDE_NORTH)->getId() == BlockLegacyIds::OBSIDIAN) {
-            return true;
+    private function filterObsidianData(ObsidianData $object) : bool
+    {
+        if($object->getCount() >= $this->getConfig()->getNested("hit-count")) {
+            $object->getPosition()->getWorld()->setBlockAt(
+                $object->getPosition()->getFloorX(),
+                $object->getPosition()->getFloorY(),
+                $object->getPosition()->getFloorZ(),
+                VanillaBlocks::AIR()
+            );
+            return false; // returning false will remove the ObsidianData from the array
         }
-        
-        if($button->getSide(Vector3::SIDE_SOUTH)->getId() == BlockLegacyIds::OBSIDIAN) {
-            return true;
-        }
-
-        if($button->getSide(Vector3::SIDE_EAST)->getId() == BlockLegacyIds::OBSIDIAN) {
-            return true;
-        }
-
-        if($button->getSide(Vector3::SIDE_WEST)->getId() == BlockLegacyIds::OBSIDIAN) {
-            return true;
-        }
-
-        return false;
-    }
-
-    private function sendCannonMessage(Player $player, string $direction){
-        $config = $this->getConfig();
-
-        if($config->get("cannon-messages")){
-            $message = $config->get("cannon-launch-message");
-            $message = str_replace("{DIRECTION}", $direction, $message);
-            $player->sendMessage($message);
-        }
-
-        if($config->get("cannon-launch-popup")){
-            $popupMessage = $config->get("cannon-launch-popup"); 
-            $player->sendPopup($popupMessage);
-        }
+        return true;
     }
 }
