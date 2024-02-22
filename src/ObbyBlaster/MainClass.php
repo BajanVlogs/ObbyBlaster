@@ -4,18 +4,13 @@ declare(strict_types=1);
 
 namespace ObbyBlaster;
 
-use pocketmine\plugin\PluginBase;
-
-use pocketmine\block\Water;
+use pocketmine\block\Block;
 use pocketmine\block\VanillaBlocks;
-
-use ObbyBlaster\ObsidianData;
-
 use pocketmine\entity\object\PrimedTNT;
-
 use pocketmine\event\Listener;
-use pocketmine\event\entity\EntityExplodeEvent;
 use pocketmine\event\block\BlockBreakEvent;
+use pocketmine\event\entity\EntityExplodeEvent;
+use pocketmine\plugin\PluginBase;
 
 class Main extends PluginBase implements Listener
 {
